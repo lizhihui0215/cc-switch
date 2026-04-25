@@ -64,6 +64,7 @@ mod tests {
     use serial_test::serial;
     use std::env;
     use std::fs;
+    use std::net::TcpListener;
     use std::path::{Path, PathBuf};
     use std::sync::{Arc, Mutex, OnceLock};
     use tempfile::TempDir;
@@ -328,6 +329,8 @@ base_url = "http://localhost:8080"
     {
         let _home = TempHome::new();
         crate::settings::reload_settings().expect("reload settings");
+        let proxy_port = free_local_port();
+        let proxy_url = format!("http://127.0.0.1:{proxy_port}");
 
         let db = Arc::new(Database::memory().expect("init db"));
         let state = AppState::new(db.clone());
@@ -354,6 +357,7 @@ base_url = "http://localhost:8080"
 
         db.update_proxy_config(ProxyConfig {
             live_takeover_active: true,
+            listen_port: proxy_port,
             ..Default::default()
         })
         .await
@@ -373,7 +377,7 @@ base_url = "http://localhost:8080"
             &get_claude_settings_path(),
             &json!({
                 "env": {
-                    "ANTHROPIC_BASE_URL": "http://127.0.0.1:15721",
+                    "ANTHROPIC_BASE_URL": proxy_url,
                     "ANTHROPIC_API_KEY": "PROXY_MANAGED",
                     "ANTHROPIC_MODEL": "stale-model"
                 },
@@ -435,7 +439,7 @@ base_url = "http://localhost:8080"
             live.get("env")
                 .and_then(|env| env.get("ANTHROPIC_BASE_URL"))
                 .and_then(|v| v.as_str()),
-            Some("http://127.0.0.1:15721"),
+            Some(proxy_url.as_str()),
             "proxy base URL should stay intact"
         );
         assert!(
@@ -444,6 +448,14 @@ base_url = "http://localhost:8080"
                 .is_none(),
             "model override should be removed in takeover live config"
         );
+    }
+
+    fn free_local_port() -> u16 {
+        TcpListener::bind(("127.0.0.1", 0))
+            .expect("bind an ephemeral test port")
+            .local_addr()
+            .expect("read ephemeral test port")
+            .port()
     }
 
     #[test]
