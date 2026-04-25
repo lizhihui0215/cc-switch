@@ -253,7 +253,9 @@ export function RequestLogTable({
                     {t("usage.provider")}
                   </TableHead>
                   <TableHead className="text-center whitespace-nowrap">
-                    {t("usage.billingModel")}
+                    {t("usage.modelRoute", {
+                      defaultValue: t("usage.billingModel"),
+                    })}
                   </TableHead>
                   <TableHead className="text-center whitespace-nowrap">
                     {t("usage.inputTokens")}
@@ -299,7 +301,7 @@ export function RequestLogTable({
                       <TableCell className="text-center">
                         {log.providerName || t("usage.unknownProvider")}
                       </TableCell>
-                      <TableCell className="text-center font-mono text-xs max-w-[200px]">
+                      <TableCell className="text-center font-mono text-xs max-w-[220px]">
                         <div
                           className="truncate"
                           title={
@@ -310,13 +312,20 @@ export function RequestLogTable({
                         >
                           {log.requestModel &&
                           log.requestModel !== log.model ? (
-                            <span>
-                              {log.requestModel}
-                              <span className="text-muted-foreground">
-                                {" → "}
-                                {log.model}
-                              </span>
-                            </span>
+                            <div className="space-y-0.5">
+                              <div className="truncate text-muted-foreground">
+                                {t("usage.clientModel", {
+                                  defaultValue: "客户端",
+                                })}
+                                ：{log.requestModel}
+                              </div>
+                              <div className="truncate text-foreground">
+                                {t("usage.upstreamModel", {
+                                  defaultValue: "上游",
+                                })}
+                                ：{log.model}
+                              </div>
+                            </div>
                           ) : (
                             log.model
                           )}

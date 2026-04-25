@@ -9,7 +9,9 @@ use toml_edit::{DocumentMut, Item, TableLike};
 
 use crate::app_config::AppType;
 use crate::codex_config::{get_codex_auth_path, get_codex_config_path};
-use crate::config::{delete_file, get_claude_settings_path, read_json_file, write_json_file};
+use crate::config::{
+    delete_file, get_claude_settings_path, read_json_file, write_json_file, write_text_file,
+};
 use crate::database::Database;
 use crate::error::AppError;
 use crate::provider::Provider;
@@ -672,6 +674,10 @@ pub(crate) fn write_live_snapshot(app_type: &AppType, provider: &Provider) -> Re
             write_json_file(&path, &settings)?;
         }
         AppType::Codex => {
+            if is_empty_codex_official_provider(provider) {
+                return write_codex_official_live_snapshot();
+            }
+
             let obj = provider
                 .settings_config
                 .as_object()
@@ -1005,6 +1011,97 @@ pub fn read_live_settings(app_type: AppType) -> Result<Value, AppError> {
             Ok(config)
         }
     }
+}
+
+pub(crate) fn is_empty_codex_official_provider(provider: &Provider) -> bool {
+    if provider.category.as_deref() != Some("official") {
+        return false;
+    }
+
+    let Some(settings) = provider.settings_config.as_object() else {
+        return false;
+    };
+
+    let auth_is_empty = settings
+        .get("auth")
+        .and_then(Value::as_object)
+        .is_some_and(|auth| auth.is_empty());
+    let config_is_empty = settings
+        .get("config")
+        .and_then(Value::as_str)
+        .is_none_or(|config| config.trim().is_empty());
+
+    auth_is_empty && config_is_empty
+}
+
+pub(crate) fn write_codex_official_live_snapshot() -> Result<(), AppError> {
+    let auth_path = get_codex_auth_path();
+    if auth_path.exists() {
+        let auth: Value = read_json_file(&auth_path)?;
+        if !codex_auth_has_official_account(&auth) {
+            delete_file(&auth_path)?;
+        }
+    }
+
+    let config_path = get_codex_config_path();
+    if config_path.exists() {
+        let config_text =
+            std::fs::read_to_string(&config_path).map_err(|e| AppError::io(&config_path, e))?;
+        let cleaned = strip_codex_provider_config(&config_text)?;
+        if cleaned.trim().is_empty() {
+            delete_file(&config_path)?;
+        } else {
+            write_text_file(&config_path, &cleaned)?;
+        }
+    }
+
+    Ok(())
+}
+
+fn codex_auth_has_official_account(auth: &Value) -> bool {
+    let Some(auth_obj) = auth.as_object() else {
+        return false;
+    };
+    if auth_obj.is_empty() {
+        return false;
+    }
+
+    auth_obj
+        .keys()
+        .any(|key| key.as_str() != "OPENAI_API_KEY" && key.as_str() != "openai_api_key")
+}
+
+fn strip_codex_provider_config(config_toml: &str) -> Result<String, AppError> {
+    if config_toml.trim().is_empty() {
+        return Ok(String::new());
+    }
+
+    let mut doc = config_toml
+        .parse::<DocumentMut>()
+        .map_err(|e| AppError::Message(format!("TOML parse error: {e}")))?;
+    let root = doc.as_table_mut();
+    root.remove("model");
+    root.remove("model_provider");
+    root.remove("model_reasoning_effort");
+    root.remove("base_url");
+    root.remove("model_providers");
+
+    let mut cleaned = String::new();
+    let mut blank_run = 0usize;
+    for line in doc.to_string().lines() {
+        if line.trim().is_empty() {
+            blank_run += 1;
+            if blank_run <= 1 {
+                cleaned.push('\n');
+            }
+            continue;
+        }
+        blank_run = 0;
+        cleaned.push_str(line);
+        cleaned.push('\n');
+    }
+
+    Ok(cleaned.trim().to_string())
 }
 
 /// Import default configuration from live files
@@ -1426,6 +1523,58 @@ pub fn remove_openclaw_provider_from_live(provider_id: &str) -> Result<(), AppEr
 mod tests {
     use super::*;
     use serde_json::json;
+    use serial_test::serial;
+    use std::env;
+    use tempfile::TempDir;
+
+    struct TempHome {
+        dir: TempDir,
+        original_home: Option<String>,
+        original_test_home: Option<String>,
+    }
+
+    impl TempHome {
+        fn new() -> Self {
+            let dir = tempfile::tempdir().expect("create temp home");
+            let original_home = env::var("HOME").ok();
+            let original_test_home = env::var("CC_SWITCH_TEST_HOME").ok();
+            env::set_var("HOME", dir.path());
+            env::set_var("CC_SWITCH_TEST_HOME", dir.path());
+            Self {
+                dir,
+                original_home,
+                original_test_home,
+            }
+        }
+
+        fn path(&self) -> &std::path::Path {
+            self.dir.path()
+        }
+    }
+
+    impl Drop for TempHome {
+        fn drop(&mut self) {
+            match &self.original_home {
+                Some(value) => env::set_var("HOME", value),
+                None => env::remove_var("HOME"),
+            }
+            match &self.original_test_home {
+                Some(value) => env::set_var("CC_SWITCH_TEST_HOME", value),
+                None => env::remove_var("CC_SWITCH_TEST_HOME"),
+            }
+        }
+    }
+
+    fn codex_official_provider() -> Provider {
+        let mut provider = Provider::with_id(
+            "codex-official".to_string(),
+            "OpenAI Official".to_string(),
+            json!({"auth": {}, "config": ""}),
+            None,
+        );
+        provider.category = Some("official".to_string());
+        provider
+    }
 
     #[test]
     fn claude_common_config_apply_and_remove_roundtrip_for_non_overlapping_fields() {
@@ -1469,6 +1618,72 @@ mod tests {
         let stripped =
             remove_common_config_from_settings(&AppType::Codex, &applied, snippet).unwrap();
         assert_eq!(stripped, settings);
+    }
+
+    #[test]
+    #[serial]
+    fn codex_official_switch_removes_api_key_auth_and_preserves_common_config() {
+        let home = TempHome::new();
+        let codex_dir = home.path().join(".codex");
+        std::fs::create_dir_all(&codex_dir).unwrap();
+        let auth_path = get_codex_auth_path();
+        let config_path = get_codex_config_path();
+        write_json_file(&auth_path, &json!({"OPENAI_API_KEY": "sk-third-party"})).unwrap();
+        write_text_file(
+            &config_path,
+            r#"model_provider = "token4ai_openai"
+model = "gpt-5.5"
+model_reasoning_effort = "high"
+
+[model_providers.token4ai_openai]
+name = "Token4AI OpenAI"
+base_url = "https://api.token4ai.cloud/v1"
+wire_api = "responses"
+
+[mcp_servers.docs]
+command = "docs-server"
+"#,
+        )
+        .unwrap();
+
+        write_live_snapshot(&AppType::Codex, &codex_official_provider()).unwrap();
+
+        assert!(
+            !auth_path.exists(),
+            "third-party API key auth should be removed"
+        );
+        let config_after = std::fs::read_to_string(config_path).unwrap();
+        assert!(config_after.contains("[mcp_servers.docs]"));
+        assert!(config_after.contains("command = \"docs-server\""));
+        assert!(!config_after.contains("model_provider"));
+        assert!(!config_after.contains("model_providers"));
+        assert!(!config_after.contains("model_reasoning_effort"));
+        assert!(!config_after.contains("gpt-5.5"));
+    }
+
+    #[test]
+    #[serial]
+    fn codex_official_switch_preserves_existing_official_auth() {
+        let home = TempHome::new();
+        let codex_dir = home.path().join(".codex");
+        std::fs::create_dir_all(&codex_dir).unwrap();
+        let auth_path = get_codex_auth_path();
+        write_json_file(
+            &auth_path,
+            &json!({
+                "tokens": {
+                    "id_token": "redacted",
+                    "refresh_token": "redacted"
+                },
+                "last_refresh": 1
+            }),
+        )
+        .unwrap();
+
+        write_live_snapshot(&AppType::Codex, &codex_official_provider()).unwrap();
+
+        let auth_after: Value = read_json_file(&auth_path).unwrap();
+        assert!(auth_after.get("tokens").is_some());
     }
 
     #[test]

@@ -51,6 +51,26 @@ export const geminiProviderPresets: GeminiProviderPreset[] = [
     iconColor: "#4285F4",
   },
   {
+    name: "Token4AI",
+    nameKey: "providerForm.presets.token4ai",
+    websiteUrl: "https://token4ai.cloud",
+    apiKeyUrl: "https://token4ai.cloud",
+    settingsConfig: {
+      env: {
+        GOOGLE_GEMINI_BASE_URL: "https://api.token4ai.cloud",
+        GEMINI_API_KEY: "",
+        GEMINI_MODEL: "",
+      },
+    },
+    baseURL: "https://api.token4ai.cloud",
+    model: "",
+    description: "Token4AI Gemini",
+    category: "aggregator",
+    isPartner: true,
+    endpointCandidates: ["https://api.token4ai.cloud"],
+    icon: "token4ai",
+  },
+  {
     name: "Shengsuanyun",
     nameKey: "providerForm.presets.shengsuanyun",
     websiteUrl: "https://www.shengsuanyun.com",

@@ -6,6 +6,7 @@ use crate::app_config::AppType;
 use crate::config::{get_claude_settings_path, read_json_file, write_json_file};
 use crate::database::Database;
 use crate::provider::Provider;
+use crate::proxy::route_metadata::provider_route_metadata;
 use crate::proxy::server::ProxyServer;
 use crate::proxy::switch_lock::SwitchLockManager;
 use crate::proxy::types::*;
@@ -1793,13 +1794,34 @@ impl ProxyService {
     /// 获取服务器状态
     pub async fn get_status(&self) -> Result<ProxyStatus, String> {
         if let Some(server) = self.server.read().await.as_ref() {
-            Ok(server.get_status().await)
+            let mut status = server.get_status().await;
+            self.enrich_active_target_routes(&mut status);
+            Ok(status)
         } else {
             // 服务器未运行时返回默认状态
             Ok(ProxyStatus {
                 running: false,
                 ..Default::default()
             })
+        }
+    }
+
+    fn enrich_active_target_routes(&self, status: &mut ProxyStatus) {
+        for target in &mut status.active_targets {
+            let provider = match self
+                .db
+                .get_provider_by_id(&target.provider_id, &target.app_type)
+            {
+                Ok(Some(provider)) => provider,
+                _ => continue,
+            };
+
+            let route = provider_route_metadata(&target.app_type, &provider);
+            target.upstream_model = route.upstream_model;
+            target.base_url = route.base_url;
+            target.api_format = route.api_format;
+            target.provider_type = route.provider_type;
+            target.supports_claude_code_compat = route.supports_claude_code_compat;
         }
     }
 

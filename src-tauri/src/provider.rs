@@ -293,6 +293,24 @@ pub struct ProviderMeta {
     /// - "openai_compatible": OpenAI-compatible API Key 供应商
     #[serde(rename = "providerType", skip_serializing_if = "Option::is_none")]
     pub provider_type: Option<String>,
+    /// 应用兼容性声明（产品层元数据，不直接写入 live 配置）
+    #[serde(rename = "usableBy", skip_serializing_if = "Option::is_none")]
+    pub usable_by: Option<Vec<String>>,
+    /// 是否支持通过本地代理/接管模式使用
+    #[serde(
+        rename = "supportsProxyTakeover",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub supports_proxy_takeover: Option<bool>,
+    /// 是否支持 Claude Code 兼容路径
+    #[serde(
+        rename = "supportsClaudeCodeCompat",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub supports_claude_code_compat: Option<bool>,
+    /// Token4AI 统一供应商产品标识（openai / claude / gemini / minimax）
+    #[serde(rename = "token4aiProduct", skip_serializing_if = "Option::is_none")]
+    pub token4ai_product: Option<String>,
     /// GitHub Copilot 关联账号 ID（仅 github_copilot 供应商使用）
     /// 用于多账号支持，关联到特定的 GitHub 账号
     #[serde(rename = "githubAccountId", skip_serializing_if = "Option::is_none")]
@@ -749,6 +767,53 @@ mod tests {
         let value = serde_json::to_value(&meta).expect("serialize ProviderMeta");
 
         assert!(value.get("pricingModelSource").is_none());
+    }
+
+    #[test]
+    fn provider_meta_serializes_token4ai_capabilities() {
+        let meta = ProviderMeta {
+            provider_type: Some("openai_compatible".to_string()),
+            api_format: Some("openai_responses".to_string()),
+            usable_by: Some(vec!["codex".to_string(), "claude".to_string()]),
+            supports_proxy_takeover: Some(true),
+            supports_claude_code_compat: Some(true),
+            token4ai_product: Some("openai".to_string()),
+            ..Default::default()
+        };
+
+        let value = serde_json::to_value(&meta).expect("serialize ProviderMeta");
+
+        assert_eq!(
+            value.get("providerType").and_then(|item| item.as_str()),
+            Some("openai_compatible")
+        );
+        assert_eq!(
+            value.get("apiFormat").and_then(|item| item.as_str()),
+            Some("openai_responses")
+        );
+        assert_eq!(
+            value
+                .get("supportsProxyTakeover")
+                .and_then(|item| item.as_bool()),
+            Some(true)
+        );
+        assert_eq!(
+            value
+                .get("supportsClaudeCodeCompat")
+                .and_then(|item| item.as_bool()),
+            Some(true)
+        );
+        assert_eq!(
+            value.get("token4aiProduct").and_then(|item| item.as_str()),
+            Some("openai")
+        );
+        assert_eq!(
+            value
+                .get("usableBy")
+                .and_then(|item| item.as_array())
+                .map(Vec::len),
+            Some(2)
+        );
     }
 
     #[test]

@@ -803,7 +803,7 @@
     "presets": {
       "ucloud": "Compshare",
       "shengsuanyun": "Shengsuanyun",
-      "token4ai": "token4AI",
+      "token4ai": "Token4AI",
       "openrouter": "OpenRouter",
       "deepseek": "DeepSeek",
       "together": "Together AI"
@@ -1104,6 +1104,12 @@
     "timingInfo": "応答時間/TTFT",
     "status": "ステータス",
     "multiplier": "倍率",
+    "modelRoute": "モデルルート",
+    "clientModel": "クライアント",
+    "upstreamModel": "上流",
+    "actualUpstreamModel": "実際の上流モデル",
+    "clientRequestModel": "クライアント要求モデル",
+    "modelRouteHint": "クライアントモデルは Claude Code が要求したモデル名です。上流モデルは cc-switch が実際にプロバイダーへ送信したモデルです。",
     "requestModel": "リクエストモデル",
     "responseModel": "レスポンスモデル",
     "noData": "データなし",
@@ -2041,6 +2047,9 @@
       "addressCopied": "アドレスをコピーしました",
       "currentProvider": "現在のプロバイダー:",
       "waitingFirstRequest": "現在のプロバイダー: 最初のリクエスト待ち...",
+      "actualModel": "実際のモデル",
+      "apiFormat": "API 形式",
+      "claudeCompatModelHint": "Claude Code の /model は Sonnet のまま表示される場合があります。ここには cc-switch が実際に上流へルーティングするモデルを表示します。",
       "stoppedTitle": "ルーティングサービス停止中",
       "stoppedDescription": "上のトグルでサービスを開始できます",
       "openSettings": "ルーティングサービスを設定",
@@ -2331,6 +2340,65 @@
     "saveAndSyncError": "保存と同期に失敗しました",
     "configJsonPreview": "設定 JSON プレビュー",
     "configJsonPreviewHint": "以下は各アプリに同期される設定内容です（表示されているフィールドのみ上書きされ、他のカスタム設定は保持されます）"
+  },
+  "token4aiUnified": {
+    "tab": "Token4AI 統合プロバイダー",
+    "title": "Token4AI 統合プロバイダー",
+    "description": "Token4AI で Codex、Claude、Gemini、MiniMax をまとめて設定します。各製品は個別の API Key を使用し、未入力の製品はスキップされます。",
+    "productApiFormat": "API Format: {{apiFormat}}",
+    "modelHint": "モデルは任意です。モデル取得に失敗した場合は手動入力できます。",
+    "validation": {
+      "requireOneApiKey": "少なくとも 1 つの Token4AI API Key を入力してください"
+    },
+    "toast": {
+      "created": "{{count}} 件の Token4AI プロバイダーを作成しました：{{providers}}",
+      "skipped": "API Key 未入力の Token4AI 製品をスキップしました：{{products}}",
+      "partialFailed": "一部の Token4AI プロバイダー作成に失敗しました。成功：{{success}}。失敗：{{failed}}",
+      "testAfterSave": "作成後、プロバイダー一覧の Stream Check で接続をテストできます。"
+    },
+    "fields": {
+      "enabled": "有効",
+      "providerName": "Provider 名称",
+      "baseUrl": "Base URL",
+      "apiKey": "API Key",
+      "apiKeyPlaceholder": "Token4AI {{product}} API Key",
+      "model": "モデル",
+      "modelPlaceholder": "モデル名を手動入力",
+      "alsoUseClaudeCode": "Claude Code でも使用",
+      "tryClaudeCode": "Claude Code で試す"
+    },
+    "actions": {
+      "fetchModels": "モデル取得",
+      "testConnection": "接続テスト"
+    },
+    "compat": {
+      "title": "Claude Code マルチモデル互換",
+      "openai": "OpenAI/GPT は OpenAI-compatible / Responses API 経由で Claude Code に対応します。",
+      "claude": "Claude は Anthropic-compatible 経由で Claude Code に対応します。",
+      "minimax": "MiniMax は OpenAI-compatible 変換パスとモデルが tool calling / streaming をサポートする場合のみ Claude Code で有効にします。",
+      "gemini": "Gemini はデフォルトで Gemini CLI 用です。",
+      "geminiDefault": "Gemini はデフォルトで Gemini CLI 用です。",
+      "openaiShort": "cc-switch proxy takeover / openai_responses 経由で Claude Code に対応します。",
+      "minimaxShort": "モデルが tool calling / streaming をサポートする場合のみ Claude Code 互換を有効にしてください。"
+    },
+    "products": {
+      "openai": {
+        "title": "OpenAI / Codex",
+        "target": "Codex / Claude Code"
+      },
+      "claude": {
+        "title": "Anthropic / Claude",
+        "target": "Claude Code"
+      },
+      "gemini": {
+        "title": "Gemini",
+        "target": "Gemini CLI"
+      },
+      "minimax": {
+        "title": "MiniMax",
+        "target": "Codex / OpenAI-compatible"
+      }
+    }
   },
   "omo": {
     "editProfile": "OMO 設定を編集",

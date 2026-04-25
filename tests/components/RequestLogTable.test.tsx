@@ -158,4 +158,53 @@ describe("RequestLogTable", () => {
       );
     });
   });
+
+  it("shows client and upstream models when routed model differs", () => {
+    const range: UsageRangeSelection = { preset: "today" };
+    useRequestLogsMock.mockImplementation(() => ({
+      data: {
+        data: [
+          {
+            requestId: "req-1",
+            providerId: "provider-1",
+            providerName: "Token4AI OpenAI",
+            appType: "claude",
+            model: "gpt-5.5",
+            requestModel: "claude-sonnet-4-6",
+            costMultiplier: "1",
+            inputTokens: 12,
+            outputTokens: 3,
+            cacheReadTokens: 0,
+            cacheCreationTokens: 0,
+            inputCostUsd: "0",
+            outputCostUsd: "0",
+            cacheReadCostUsd: "0",
+            cacheCreationCostUsd: "0",
+            totalCostUsd: "0",
+            isStreaming: false,
+            latencyMs: 1000,
+            statusCode: 200,
+            createdAt: 1_777_086_400,
+            dataSource: "proxy",
+          },
+        ],
+        total: 1,
+        page: 0,
+        pageSize: 20,
+      },
+      isLoading: false,
+    }));
+
+    render(
+      <RequestLogTable
+        range={range}
+        rangeLabel="Today"
+        appType="claude"
+        refreshIntervalMs={0}
+      />,
+    );
+
+    expect(screen.getByText("客户端：claude-sonnet-4-6")).toBeInTheDocument();
+    expect(screen.getByText("上游：gpt-5.5")).toBeInTheDocument();
+  });
 });

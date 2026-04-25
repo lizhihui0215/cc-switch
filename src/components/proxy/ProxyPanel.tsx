@@ -336,17 +336,55 @@ export function ProxyPanel({
                     {status.active_targets.map((target) => (
                       <div
                         key={target.app_type}
-                        className="flex items-center justify-between rounded-md border border-border bg-background/60 px-2 py-1.5 text-xs"
+                        className="rounded-md border border-border bg-background/60 px-2 py-1.5 text-xs"
                       >
-                        <span className="text-muted-foreground">
-                          {target.app_type}
-                        </span>
-                        <span
-                          className="ml-2 font-medium truncate text-foreground"
-                          title={target.provider_name}
-                        >
-                          {target.provider_name}
-                        </span>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-muted-foreground">
+                            {target.app_type}
+                          </span>
+                          <span
+                            className="font-medium truncate text-foreground"
+                            title={target.provider_name}
+                          >
+                            {target.provider_name}
+                          </span>
+                        </div>
+                        {(target.upstream_model || target.api_format) && (
+                          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground">
+                            {target.upstream_model && (
+                              <span>
+                                {t("proxy.panel.actualModel", {
+                                  defaultValue: "实际模型",
+                                })}
+                                ：
+                                <code className="rounded bg-muted px-1 font-mono text-foreground">
+                                  {target.upstream_model}
+                                </code>
+                              </span>
+                            )}
+                            {target.api_format && (
+                              <span>
+                                {t("proxy.panel.apiFormat", {
+                                  defaultValue: "API 格式",
+                                })}
+                                ：
+                                <code className="rounded bg-muted px-1 font-mono text-foreground">
+                                  {target.api_format}
+                                </code>
+                              </span>
+                            )}
+                          </div>
+                        )}
+                        {target.app_type === "claude" &&
+                          target.supports_claude_code_compat &&
+                          target.upstream_model && (
+                            <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+                              {t("proxy.panel.claudeCompatModelHint", {
+                                defaultValue:
+                                  "Claude Code 内部 /model 可能仍显示 Sonnet；这里显示的是 cc-switch 实际转发到上游的模型。",
+                              })}
+                            </p>
+                          )}
                       </div>
                     ))}
                   </div>

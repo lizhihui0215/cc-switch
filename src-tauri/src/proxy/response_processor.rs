@@ -570,7 +570,7 @@ async fn log_usage_internal(
     let request_id = usage.dedup_request_id();
 
     log::debug!(
-        "[{app_type}] 记录请求日志: id={request_id}, provider={provider_id}, model={model}, streaming={is_streaming}, status={status_code}, latency_ms={latency_ms}, first_token_ms={first_token_ms:?}, session={}, input={}, output={}, cache_read={}, cache_creation={}",
+        "[{app_type}] 记录请求日志: id={request_id}, provider={provider_id}, client_model={request_model}, upstream_model={model}, pricing_model={pricing_model}, streaming={is_streaming}, status={status_code}, latency_ms={latency_ms}, first_token_ms={first_token_ms:?}, session={}, input={}, output={}, cache_read={}, cache_creation={}",
         session_id.as_deref().unwrap_or("none"),
         usage.input_tokens,
         usage.output_tokens,

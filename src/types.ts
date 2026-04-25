@@ -173,6 +173,14 @@ export interface ProviderMeta {
   codexFastMode?: boolean;
   // 供应商类型（用于识别 Copilot、OpenAI-compatible 等供应商）
   providerType?: string;
+  // 应用兼容性声明（产品层元数据，不直接写入 live 配置）
+  usableBy?: string[];
+  // 是否支持通过本地代理/接管模式使用
+  supportsProxyTakeover?: boolean;
+  // 是否支持 Claude Code 兼容路径
+  supportsClaudeCodeCompat?: boolean;
+  // Token4AI 统一供应商产品标识（openai / claude / gemini / minimax）
+  token4aiProduct?: string;
   // GitHub Copilot 关联账号 ID（旧字段，保留兼容读取）
   githubAccountId?: string;
 }

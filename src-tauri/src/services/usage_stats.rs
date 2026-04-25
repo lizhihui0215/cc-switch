@@ -867,8 +867,10 @@ impl Database {
             params.push(Box::new(format!("%{provider_name}%")));
         }
         if let Some(ref model) = filters.model {
-            conditions.push("l.model LIKE ?");
-            params.push(Box::new(format!("%{model}%")));
+            conditions.push("(l.model LIKE ? OR l.request_model LIKE ?)");
+            let pattern = format!("%{model}%");
+            params.push(Box::new(pattern.clone()));
+            params.push(Box::new(pattern));
         }
         if let Some(status) = filters.status_code {
             conditions.push("l.status_code = ?");

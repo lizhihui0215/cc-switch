@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AddProviderDialog } from "@/components/providers/AddProviderDialog";
 import type { ProviderFormValues } from "@/components/providers/forms/ProviderForm";
@@ -57,6 +58,59 @@ describe("AddProviderDialog", () => {
         },
       },
     };
+  });
+
+  it("添加供应商页展示 Token4AI 统一供应商第三个 tab", () => {
+    render(
+      <AddProviderDialog
+        open
+        onOpenChange={vi.fn()}
+        appId="claude"
+        onSubmit={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByRole("tab", {
+        name: "apps.claude provider.tabProvider",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("tab", {
+        name: "provider.tabUniversal",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("tab", {
+        name: "Token4AI 统一供应商",
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("Token4AI tab 展示四个产品默认 Base URL", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <AddProviderDialog
+        open
+        onOpenChange={vi.fn()}
+        appId="claude"
+        onSubmit={vi.fn()}
+      />,
+    );
+
+    await user.click(
+      screen.getByRole("tab", {
+        name: "Token4AI 统一供应商",
+      }),
+    );
+
+    expect(
+      screen.getAllByDisplayValue("https://api.token4ai.cloud/v1"),
+    ).toHaveLength(2);
+    expect(
+      screen.getAllByDisplayValue("https://api.token4ai.cloud"),
+    ).toHaveLength(2);
   });
 
   it("使用 ProviderForm 返回的自定义端点", async () => {

@@ -259,6 +259,11 @@ impl ProxyServer {
                 app_type: app_type.clone(),
                 provider_id: provider_id.clone(),
                 provider_name: provider_name.clone(),
+                upstream_model: None,
+                base_url: None,
+                api_format: None,
+                provider_type: None,
+                supports_claude_code_compat: false,
             })
             .collect();
 

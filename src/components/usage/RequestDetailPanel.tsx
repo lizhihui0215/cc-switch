@@ -101,10 +101,18 @@ export function RequestDetailPanel({
               </div>
               <div>
                 <dt className="text-muted-foreground">
-                  {t("usage.model", "模型")}
+                  {t("usage.actualUpstreamModel", "实际上游模型")}
                 </dt>
                 <dd className="font-mono">{request.model}</dd>
               </div>
+              {request.requestModel && request.requestModel !== request.model && (
+                <div>
+                  <dt className="text-muted-foreground">
+                    {t("usage.clientRequestModel", "客户端请求模型")}
+                  </dt>
+                  <dd className="font-mono">{request.requestModel}</dd>
+                </div>
+              )}
               <div>
                 <dt className="text-muted-foreground">
                   {t("usage.status", "状态")}
@@ -121,6 +129,14 @@ export function RequestDetailPanel({
                   </span>
                 </dd>
               </div>
+              {request.requestModel && request.requestModel !== request.model && (
+                <div className="col-span-2 rounded-md border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-muted-foreground">
+                  {t(
+                    "usage.modelRouteHint",
+                    "客户端模型是 Claude Code 发来的模型名；实际上游模型是 cc-switch 转发到供应商时使用的模型。",
+                  )}
+                </div>
+              )}
             </dl>
           </div>
 

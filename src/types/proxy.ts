@@ -33,6 +33,11 @@ export interface ActiveTarget {
   app_type: string;
   provider_name: string;
   provider_id: string;
+  upstream_model?: string;
+  base_url?: string;
+  api_format?: string;
+  provider_type?: string;
+  supports_claude_code_compat?: boolean;
 }
 
 export interface ProxyServerInfo {

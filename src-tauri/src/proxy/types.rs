@@ -97,6 +97,16 @@ pub struct ActiveTarget {
     pub app_type: String, // "Claude" | "Codex" | "Gemini"
     pub provider_name: String,
     pub provider_id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub upstream_model: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub base_url: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub api_format: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub provider_type: Option<String>,
+    #[serde(default)]
+    pub supports_claude_code_compat: bool,
 }
 
 /// 代理服务器信息

@@ -803,7 +803,7 @@
     "presets": {
       "ucloud": "Compshare",
       "shengsuanyun": "Shengsuanyun",
-      "token4ai": "token4AI",
+      "token4ai": "Token4AI",
       "openrouter": "OpenRouter",
       "deepseek": "DeepSeek",
       "together": "Together AI"
@@ -1104,6 +1104,12 @@
     "timingInfo": "Duration/TTFT",
     "status": "Status",
     "multiplier": "Multiplier",
+    "modelRoute": "Model Route",
+    "clientModel": "Client",
+    "upstreamModel": "Upstream",
+    "actualUpstreamModel": "Actual Upstream Model",
+    "clientRequestModel": "Client Request Model",
+    "modelRouteHint": "The client model is what Claude Code requested; the upstream model is what cc-switch actually sent to the provider.",
     "requestModel": "Request Model",
     "responseModel": "Response Model",
     "noData": "No data",
@@ -2041,6 +2047,9 @@
       "addressCopied": "Address copied",
       "currentProvider": "Current Provider:",
       "waitingFirstRequest": "Current Provider: Waiting for first request...",
+      "actualModel": "Actual Model",
+      "apiFormat": "API Format",
+      "claudeCompatModelHint": "Claude Code may still show Sonnet in /model; this is the model cc-switch actually routes upstream.",
       "stoppedTitle": "Routing Service Stopped",
       "stoppedDescription": "Use the toggle above to start the service",
       "openSettings": "Configure Routing Service",
@@ -2331,6 +2340,65 @@
     "saveAndSyncError": "Failed to save and sync",
     "configJsonPreview": "Config JSON Preview",
     "configJsonPreviewHint": "The following configurations will be synced to each app (only the displayed fields will be overwritten, other custom settings will be preserved)"
+  },
+  "token4aiUnified": {
+    "tab": "Token4AI Unified Provider",
+    "title": "Token4AI Unified Provider",
+    "description": "Configure Codex, Claude, Gemini, and MiniMax through Token4AI. Each product uses its own API key. Products without an API key will be skipped.",
+    "productApiFormat": "API Format: {{apiFormat}}",
+    "modelHint": "Model is optional; if model discovery fails, enter a model name manually.",
+    "validation": {
+      "requireOneApiKey": "Please enter at least one Token4AI API key"
+    },
+    "toast": {
+      "created": "Created {{count}} Token4AI providers: {{providers}}",
+      "skipped": "Skipped Token4AI products without an API key: {{products}}",
+      "partialFailed": "Some Token4AI providers failed to create. Success: {{success}}. Failed: {{failed}}",
+      "testAfterSave": "After creating the provider, use Stream Check from the provider list to test the connection."
+    },
+    "fields": {
+      "enabled": "Enabled",
+      "providerName": "Provider Name",
+      "baseUrl": "Base URL",
+      "apiKey": "API Key",
+      "apiKeyPlaceholder": "Token4AI {{product}} API Key",
+      "model": "Model",
+      "modelPlaceholder": "Enter model name manually",
+      "alsoUseClaudeCode": "Also use with Claude Code",
+      "tryClaudeCode": "Try with Claude Code"
+    },
+    "actions": {
+      "fetchModels": "Fetch Models",
+      "testConnection": "Test Connection"
+    },
+    "compat": {
+      "title": "Claude Code multi-model compatibility",
+      "openai": "OpenAI/GPT is supported in Claude Code through the OpenAI-compatible / Responses API path.",
+      "claude": "Claude is supported in Claude Code through the Anthropic-compatible path.",
+      "minimax": "MiniMax is enabled for Claude Code only when the OpenAI-compatible conversion path and model support tool calling / streaming.",
+      "gemini": "Gemini is used for Gemini CLI by default.",
+      "geminiDefault": "Gemini is used for Gemini CLI by default.",
+      "openaiShort": "Compatible with Claude Code through cc-switch proxy takeover / openai_responses.",
+      "minimaxShort": "Enable Claude Code compatibility only when the model supports tool calling / streaming."
+    },
+    "products": {
+      "openai": {
+        "title": "OpenAI / Codex",
+        "target": "Codex / Claude Code"
+      },
+      "claude": {
+        "title": "Anthropic / Claude",
+        "target": "Claude Code"
+      },
+      "gemini": {
+        "title": "Gemini",
+        "target": "Gemini CLI"
+      },
+      "minimax": {
+        "title": "MiniMax",
+        "target": "Codex / OpenAI-compatible"
+      }
+    }
   },
   "omo": {
     "editProfile": "Edit OMO Config",

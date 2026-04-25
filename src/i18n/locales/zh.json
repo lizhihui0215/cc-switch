@@ -803,7 +803,7 @@
     "presets": {
       "ucloud": "优云智算",
       "shengsuanyun": "胜算云",
-      "token4ai": "token4AI",
+      "token4ai": "Token4AI",
       "openrouter": "OpenRouter",
       "deepseek": "DeepSeek",
       "together": "Together AI"
@@ -1104,6 +1104,12 @@
     "timingInfo": "用时/首字",
     "status": "状态",
     "multiplier": "倍率",
+    "modelRoute": "模型路由",
+    "clientModel": "客户端",
+    "upstreamModel": "上游",
+    "actualUpstreamModel": "实际上游模型",
+    "clientRequestModel": "客户端请求模型",
+    "modelRouteHint": "客户端模型是 Claude Code 发来的模型名；实际上游模型是 cc-switch 转发到供应商时使用的模型。",
     "requestModel": "请求模型",
     "responseModel": "返回模型",
     "noData": "暂无数据",
@@ -2041,6 +2047,9 @@
       "addressCopied": "地址已复制",
       "currentProvider": "当前 Provider：",
       "waitingFirstRequest": "当前 Provider：等待首次请求…",
+      "actualModel": "实际模型",
+      "apiFormat": "API 格式",
+      "claudeCompatModelHint": "Claude Code 内部 /model 可能仍显示 Sonnet；这里显示的是 cc-switch 实际转发到上游的模型。",
       "stoppedTitle": "路由服务已停止",
       "stoppedDescription": "使用上方开关即可启动服务",
       "openSettings": "配置路由服务",
@@ -2331,6 +2340,65 @@
     "saveAndSyncError": "保存并同步失败",
     "configJsonPreview": "配置 JSON 预览",
     "configJsonPreviewHint": "以下是将要同步到各应用的配置内容（仅覆盖显示的字段，保留其他自定义配置）"
+  },
+  "token4aiUnified": {
+    "tab": "Token4AI 统一供应商",
+    "title": "Token4AI 统一供应商",
+    "description": "通过 Token4AI 一次性配置 Codex、Claude、Gemini、MiniMax。每个产品使用独立 API Key，未填写 API Key 的产品将跳过创建。",
+    "productApiFormat": "API Format: {{apiFormat}}",
+    "modelHint": "模型可留空；模型发现失败时可手动输入。",
+    "validation": {
+      "requireOneApiKey": "请至少填写一个 Token4AI 产品的 API Key"
+    },
+    "toast": {
+      "created": "已创建 {{count}} 个 Token4AI 供应商：{{providers}}",
+      "skipped": "未填写 API Key 的 Token4AI 产品已跳过：{{products}}",
+      "partialFailed": "Token4AI 部分供应商创建失败。成功：{{success}}。失败：{{failed}}",
+      "testAfterSave": "创建 provider 后，可在供应商列表中使用 Stream Check 测试连接。"
+    },
+    "fields": {
+      "enabled": "启用",
+      "providerName": "Provider 名称",
+      "baseUrl": "Base URL",
+      "apiKey": "API Key",
+      "apiKeyPlaceholder": "Token4AI {{product}} API Key",
+      "model": "模型",
+      "modelPlaceholder": "可手动输入模型名",
+      "alsoUseClaudeCode": "同时用于 Claude Code",
+      "tryClaudeCode": "尝试用于 Claude Code"
+    },
+    "actions": {
+      "fetchModels": "获取模型",
+      "testConnection": "测试连接"
+    },
+    "compat": {
+      "title": "Claude Code 多模型兼容",
+      "openai": "OpenAI/GPT：已通过 OpenAI-compatible / Responses API 路径支持 Claude Code。",
+      "claude": "Claude：通过 Anthropic-compatible 路径支持 Claude Code。",
+      "minimax": "MiniMax：仅当接口兼容 OpenAI-compatible 且模型支持 tool calling / streaming 时建议启用 Claude Code 兼容。",
+      "gemini": "Gemini：默认用于 Gemini CLI。",
+      "geminiDefault": "Gemini 默认用于 Gemini CLI。",
+      "openaiShort": "通过 cc-switch proxy takeover / openai_responses 兼容 Claude Code。",
+      "minimaxShort": "仅当模型支持 tool calling / streaming 时建议开启 Claude Code 兼容。"
+    },
+    "products": {
+      "openai": {
+        "title": "OpenAI / Codex",
+        "target": "Codex / Claude Code"
+      },
+      "claude": {
+        "title": "Anthropic / Claude",
+        "target": "Claude Code"
+      },
+      "gemini": {
+        "title": "Gemini",
+        "target": "Gemini CLI"
+      },
+      "minimax": {
+        "title": "MiniMax",
+        "target": "Codex / OpenAI-compatible"
+      }
+    }
   },
   "omo": {
     "editProfile": "编辑 OMO 配置",

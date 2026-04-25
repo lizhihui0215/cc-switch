@@ -1376,11 +1376,21 @@ impl RequestForwarder {
 
         // 输出请求信息日志
         let tag = adapter.name();
-        let request_model = filtered_body
+        let upstream_model = filtered_body
             .get("model")
             .and_then(|v| v.as_str())
             .unwrap_or("<none>");
-        log::info!("[{tag}] >>> 请求 URL: {url} (model={request_model})");
+        let client_model = body
+            .get("model")
+            .and_then(|v| v.as_str())
+            .unwrap_or("<none>");
+        if client_model != upstream_model {
+            log::info!(
+                "[{tag}] >>> 请求 URL: {url} (client_model={client_model}, upstream_model={upstream_model})"
+            );
+        } else {
+            log::info!("[{tag}] >>> 请求 URL: {url} (model={upstream_model})");
+        }
         if let Ok(body_str) = serde_json::to_string(&filtered_body) {
             log::debug!(
                 "[{tag}] >>> 请求体内容 ({}字节): {}",

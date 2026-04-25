@@ -711,19 +711,50 @@ fn log_forward_error(
     let status_code = map_proxy_error_to_status(error);
     let error_message = get_error_message(error);
     let request_id = uuid::Uuid::new_v4().to_string();
+    let route = super::route_metadata::provider_route_metadata(ctx.app_type_str, &ctx.provider);
+    let upstream_model = route
+        .upstream_model
+        .unwrap_or_else(|| ctx.request_model.clone());
 
-    if let Err(e) = logger.log_error_with_context(
-        request_id,
-        ctx.provider.id.clone(),
-        ctx.app_type_str.to_string(),
-        ctx.request_model.clone(),
-        status_code,
-        error_message,
-        ctx.latency_ms(),
-        is_streaming,
-        Some(ctx.session_id.clone()),
-        None,
-    ) {
+    if upstream_model != ctx.request_model {
+        log::warn!(
+            "[{}] 上游请求失败: client_model={} -> upstream_model={}, status={status_code}",
+            ctx.app_type_str,
+            ctx.request_model,
+            upstream_model
+        );
+    }
+
+    let log_result = if upstream_model == ctx.request_model {
+        logger.log_error_with_context(
+            request_id,
+            ctx.provider.id.clone(),
+            ctx.app_type_str.to_string(),
+            upstream_model,
+            status_code,
+            error_message,
+            ctx.latency_ms(),
+            is_streaming,
+            Some(ctx.session_id.clone()),
+            None,
+        )
+    } else {
+        logger.log_error_with_models(
+            request_id,
+            ctx.provider.id.clone(),
+            ctx.app_type_str.to_string(),
+            upstream_model,
+            ctx.request_model.clone(),
+            status_code,
+            error_message,
+            ctx.latency_ms(),
+            is_streaming,
+            Some(ctx.session_id.clone()),
+            None,
+        )
+    };
+
+    if let Err(e) = log_result {
         log::warn!("记录失败请求日志失败: {e}");
     }
 }

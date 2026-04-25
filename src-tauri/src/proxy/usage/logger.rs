@@ -164,7 +164,37 @@ impl<'a> UsageLogger<'a> {
         session_id: Option<String>,
         provider_type: Option<String>,
     ) -> Result<(), AppError> {
-        let request_model = model.clone();
+        self.log_error_with_models(
+            request_id,
+            provider_id,
+            app_type,
+            model.clone(),
+            model,
+            status_code,
+            error_message,
+            latency_ms,
+            is_streaming,
+            session_id,
+            provider_type,
+        )
+    }
+
+    /// 记录失败的请求，并显式区分客户端请求模型与实际上游模型。
+    #[allow(clippy::too_many_arguments)]
+    pub fn log_error_with_models(
+        &self,
+        request_id: String,
+        provider_id: String,
+        app_type: String,
+        model: String,
+        request_model: String,
+        status_code: u16,
+        error_message: String,
+        latency_ms: u64,
+        is_streaming: bool,
+        session_id: Option<String>,
+        provider_type: Option<String>,
+    ) -> Result<(), AppError> {
         let log = RequestLog {
             request_id,
             provider_id,
@@ -418,6 +448,39 @@ mod tests {
             .unwrap();
         assert_eq!(status, 500);
         assert_eq!(error, Some("Internal Server Error".to_string()));
+        Ok(())
+    }
+
+    #[test]
+    fn test_log_error_with_models_keeps_request_and_upstream_models_distinct(
+    ) -> Result<(), AppError> {
+        let db = Database::memory()?;
+        let logger = UsageLogger::new(&db);
+
+        logger.log_error_with_models(
+            "req-route-error".to_string(),
+            "provider-1".to_string(),
+            "claude".to_string(),
+            "gpt-5.5".to_string(),
+            "claude-sonnet-4-6".to_string(),
+            500,
+            "Internal Server Error".to_string(),
+            50,
+            true,
+            Some("session-1".to_string()),
+            None,
+        )?;
+
+        let conn = crate::database::lock_conn!(db.conn);
+        let (model, request_model): (String, String) = conn
+            .query_row(
+                "SELECT model, request_model FROM proxy_request_logs WHERE request_id = 'req-route-error'",
+                [],
+                |row| Ok((row.get(0)?, row.get(1)?)),
+            )
+            .unwrap();
+        assert_eq!(model, "gpt-5.5");
+        assert_eq!(request_model, "claude-sonnet-4-6");
         Ok(())
     }
 }

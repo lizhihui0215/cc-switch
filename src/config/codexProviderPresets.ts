@@ -79,6 +79,22 @@ export const codexProviderPresets: CodexProviderPreset[] = [
     iconColor: "#00A67E",
   },
   {
+    name: "Token4AI",
+    nameKey: "providerForm.presets.token4ai",
+    websiteUrl: "https://token4ai.cloud",
+    apiKeyUrl: "https://token4ai.cloud",
+    auth: generateThirdPartyAuth(""),
+    config: generateThirdPartyConfig(
+      "token4ai_openai",
+      "https://api.token4ai.cloud/v1",
+      "gpt-5.4",
+    ),
+    category: "aggregator",
+    isPartner: true,
+    endpointCandidates: ["https://api.token4ai.cloud/v1"],
+    icon: "token4ai",
+  },
+  {
     name: "Shengsuanyun",
     nameKey: "providerForm.presets.shengsuanyun",
     websiteUrl: "https://www.shengsuanyun.com",
