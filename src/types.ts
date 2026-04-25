@@ -179,7 +179,7 @@ export interface ProviderMeta {
   supportsProxyTakeover?: boolean;
   // 是否支持 Claude Code 兼容路径
   supportsClaudeCodeCompat?: boolean;
-  // Token4AI 统一供应商产品标识（openai / claude / gemini / minimax）
+  // Token4AI 统一供应商产品标识（openai / anthropic / gemini / minimax）
   token4aiProduct?: string;
   // GitHub Copilot 关联账号 ID（旧字段，保留兼容读取）
   githubAccountId?: string;

@@ -29,6 +29,7 @@ mod services;
 mod session_manager;
 mod settings;
 mod store;
+mod token4ai;
 
 mod tray;
 mod usage_script;

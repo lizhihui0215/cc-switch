@@ -308,7 +308,7 @@ pub struct ProviderMeta {
         skip_serializing_if = "Option::is_none"
     )]
     pub supports_claude_code_compat: Option<bool>,
-    /// Token4AI 统一供应商产品标识（openai / claude / gemini / minimax）
+    /// Token4AI 统一供应商产品标识（openai / anthropic / gemini / minimax）
     #[serde(rename = "token4aiProduct", skip_serializing_if = "Option::is_none")]
     pub token4ai_product: Option<String>,
     /// GitHub Copilot 关联账号 ID（仅 github_copilot 供应商使用）

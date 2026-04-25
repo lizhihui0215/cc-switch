@@ -11,7 +11,7 @@ describe("Token4AI unified provider builder", () => {
     expect(TOKEN4AI_PRODUCTS.openai.defaultBaseUrl).toBe(
       "https://api.token4ai.cloud/v1",
     );
-    expect(TOKEN4AI_PRODUCTS.claude.defaultBaseUrl).toBe(
+    expect(TOKEN4AI_PRODUCTS.anthropic.defaultBaseUrl).toBe(
       "https://api.token4ai.cloud",
     );
     expect(TOKEN4AI_PRODUCTS.gemini.defaultBaseUrl).toBe(
@@ -65,8 +65,8 @@ describe("Token4AI unified provider builder", () => {
 
   it("builds Claude native provider with Anthropic-compatible metadata", () => {
     const state = createDefaultToken4AIUnifiedState();
-    state.claude.apiKey = "token4ai-claude-test-key";
-    state.claude.model = "claude-sonnet";
+    state.anthropic.apiKey = "token4ai-claude-test-key";
+    state.anthropic.model = "claude-sonnet";
 
     const [target] = buildToken4AIProviderTargets(state);
 
@@ -82,14 +82,14 @@ describe("Token4AI unified provider builder", () => {
   it("builds both OpenAI and Claude products when both API keys are filled", () => {
     const state = createDefaultToken4AIUnifiedState();
     state.openai.apiKey = "token4ai-openai-test-key";
-    state.claude.apiKey = "token4ai-claude-test-key";
+    state.anthropic.apiKey = "token4ai-claude-test-key";
 
     const targets = buildToken4AIProviderTargets(state);
 
     expect(targets.map((target) => target.productKey)).toEqual([
       "openai",
       "openai",
-      "claude",
+      "anthropic",
     ]);
     expect(targets.map((target) => target.appId)).toEqual([
       "codex",

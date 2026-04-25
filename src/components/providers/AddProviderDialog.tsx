@@ -13,6 +13,7 @@ import {
   type ProviderFormValues,
 } from "@/components/providers/forms/ProviderForm";
 import { Token4AIUnifiedProviderForm } from "@/components/providers/Token4AIUnifiedProviderForm";
+import { TOKEN4AI_PROVIDER_TAB } from "@/features/token4ai";
 import { UniversalProviderFormModal } from "@/components/universal/UniversalProviderFormModal";
 import { UniversalProviderPanel } from "@/components/universal";
 import { providerPresets } from "@/config/claudeProviderPresets";
@@ -21,6 +22,11 @@ import { geminiProviderPresets } from "@/config/geminiProviderPresets";
 import { extractCodexBaseUrl } from "@/utils/providerConfigUtils";
 import type { OpenClawSuggestedDefaults } from "@/config/openclawProviderPresets";
 import type { UniversalProviderPreset } from "@/config/universalProviderPresets";
+
+type AddProviderTabId =
+  | "app-specific"
+  | "universal"
+  | typeof TOKEN4AI_PROVIDER_TAB.id;
 
 interface AddProviderDialogProps {
   open: boolean;
@@ -44,9 +50,7 @@ export function AddProviderDialog({
   // OpenCode and OpenClaw don't support universal providers
   const showUniversalTab =
     appId !== "opencode" && appId !== "openclaw" && appId !== "hermes";
-  const [activeTab, setActiveTab] = useState<
-    "app-specific" | "universal" | "token4ai"
-  >("app-specific");
+  const [activeTab, setActiveTab] = useState<AddProviderTabId>("app-specific");
   const [universalFormOpen, setUniversalFormOpen] = useState(false);
   const [selectedUniversalPreset, setSelectedUniversalPreset] =
     useState<UniversalProviderPreset | null>(null);
@@ -261,7 +265,7 @@ export function AddProviderDialog({
           {t("common.add")}
         </Button>
       </>
-    ) : activeTab === "token4ai" ? (
+    ) : activeTab === TOKEN4AI_PROVIDER_TAB.id ? (
       <>
         <Button
           variant="outline"
@@ -272,7 +276,7 @@ export function AddProviderDialog({
         </Button>
         <Button
           type="submit"
-          form="token4ai-unified-provider-form"
+          form={TOKEN4AI_PROVIDER_TAB.formId}
           disabled={isFormSubmitting}
           className="bg-primary text-primary-foreground hover:bg-primary/90"
         >
@@ -309,9 +313,7 @@ export function AddProviderDialog({
       {showUniversalTab ? (
         <Tabs
           value={activeTab}
-          onValueChange={(v) =>
-            setActiveTab(v as "app-specific" | "universal" | "token4ai")
-          }
+          onValueChange={(v) => setActiveTab(v as AddProviderTabId)}
         >
           <TabsList className="grid w-full grid-cols-3 mb-6">
             <TabsTrigger value="app-specific">
@@ -320,9 +322,10 @@ export function AddProviderDialog({
             <TabsTrigger value="universal">
               {t("provider.tabUniversal")}
             </TabsTrigger>
-            <TabsTrigger value="token4ai">
-              {t("token4aiUnified.tab", {
-                defaultValue: "Token4AI 统一供应商",
+            {/* Token4AI extension mount: keep this block small to reduce upstream merge conflicts. */}
+            <TabsTrigger value={TOKEN4AI_PROVIDER_TAB.id}>
+              {t(TOKEN4AI_PROVIDER_TAB.labelKey, {
+                defaultValue: TOKEN4AI_PROVIDER_TAB.defaultLabel,
               })}
             </TabsTrigger>
           </TabsList>
@@ -342,9 +345,10 @@ export function AddProviderDialog({
             <UniversalProviderPanel />
           </TabsContent>
 
-          <TabsContent value="token4ai" className="mt-0">
+          {/* Token4AI extension mount: keep this block small to reduce upstream merge conflicts. */}
+          <TabsContent value={TOKEN4AI_PROVIDER_TAB.id} className="mt-0">
             <Token4AIUnifiedProviderForm
-              formId="token4ai-unified-provider-form"
+              formId={TOKEN4AI_PROVIDER_TAB.formId}
               onOpenChange={onOpenChange}
               onSubmittingChange={setIsFormSubmitting}
             />
