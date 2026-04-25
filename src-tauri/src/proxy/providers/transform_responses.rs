@@ -672,6 +672,47 @@ mod tests {
     }
 
     #[test]
+    fn test_token4ai_tool_use_smoke_preserves_call_fields() {
+        let input = json!({
+            "model": "token4ai-model",
+            "max_tokens": 1024,
+            "messages": [
+                {
+                    "role": "assistant",
+                    "content": [
+                        {
+                            "type": "tool_use",
+                            "id": "toolu_token4ai_1",
+                            "name": "read_file",
+                            "input": { "path": "package.json" }
+                        }
+                    ]
+                },
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "tool_result",
+                            "tool_use_id": "toolu_token4ai_1",
+                            "content": "{\"scripts\":{\"test\":\"vitest run\"}}"
+                        }
+                    ]
+                }
+            ]
+        });
+
+        let result = anthropic_to_responses(input, None, false, false).unwrap();
+        let input_arr = result["input"].as_array().unwrap();
+
+        assert_eq!(input_arr[0]["type"], "function_call");
+        assert_eq!(input_arr[0]["call_id"], "toolu_token4ai_1");
+        assert_eq!(input_arr[0]["name"], "read_file");
+        assert_eq!(input_arr[0]["arguments"], "{\"path\":\"package.json\"}");
+        assert_eq!(input_arr[1]["type"], "function_call_output");
+        assert_eq!(input_arr[1]["call_id"], "toolu_token4ai_1");
+    }
+
+    #[test]
     fn test_anthropic_to_responses_thinking_discarded() {
         let input = json!({
             "model": "gpt-4o",

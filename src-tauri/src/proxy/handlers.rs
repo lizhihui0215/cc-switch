@@ -201,16 +201,17 @@ async fn handle_claude_transform(
         let usage_collector = {
             let state = state.clone();
             let provider_id = ctx.provider.id.clone();
-            let model = ctx.request_model.clone();
+            let request_model = ctx.request_model.clone();
             let status_code = status.as_u16();
             let start_time = ctx.start_time;
 
             SseUsageCollector::new(start_time, move |events, first_token_ms| {
                 if let Some(usage) = TokenUsage::from_claude_stream_events(&events) {
+                    let model = effective_claude_stream_model(&events, &usage, &request_model);
                     let latency_ms = start_time.elapsed().as_millis() as u64;
                     let state = state.clone();
                     let provider_id = provider_id.clone();
-                    let model = model.clone();
+                    let request_model = request_model.clone();
 
                     tokio::spawn(async move {
                         log_usage(
@@ -218,7 +219,7 @@ async fn handle_claude_transform(
                             &provider_id,
                             "claude",
                             &model,
-                            &model,
+                            &request_model,
                             usage,
                             latency_ms,
                             first_token_ms,
@@ -349,6 +350,30 @@ async fn handle_claude_transform(
         log::error!("[Claude] 构建响应失败: {e}");
         ProxyError::Internal(format!("Failed to build response: {e}"))
     })
+}
+
+fn effective_claude_stream_model(
+    events: &[Value],
+    usage: &TokenUsage,
+    request_model: &str,
+) -> String {
+    usage
+        .model
+        .clone()
+        .or_else(|| {
+            events.iter().find_map(|event| {
+                if event.get("type").and_then(|v| v.as_str()) == Some("message_start") {
+                    event
+                        .get("message")
+                        .and_then(|message| message.get("model"))
+                        .and_then(|model| model.as_str())
+                        .map(ToString::to_string)
+                } else {
+                    None
+                }
+            })
+        })
+        .unwrap_or_else(|| request_model.to_string())
 }
 
 fn endpoint_with_query(uri: &axum::http::Uri, endpoint: &str) -> String {
@@ -753,8 +778,13 @@ async fn log_usage(
 
 #[cfg(test)]
 mod tests {
-    use super::{responses_sse_to_response_value, should_use_claude_transform_streaming};
+    use super::{
+        effective_claude_stream_model, responses_sse_to_response_value,
+        should_use_claude_transform_streaming,
+    };
+    use crate::proxy::usage::parser::TokenUsage;
     use crate::proxy::ProxyError;
+    use serde_json::json;
 
     #[test]
     fn codex_oauth_responses_force_streaming_even_if_client_sent_false() {
@@ -839,5 +869,32 @@ data: {\"type\":\"response.failed\",\"response\":{\"error\":{\"message\":\"upstr
 data: {\"type\":\"response.output_item.done\",\"item\":{\"type\":\"message\"}}\n\n";
 
         assert!(responses_sse_to_response_value(sse).is_err());
+    }
+
+    #[test]
+    fn transformed_claude_stream_usage_keeps_request_and_upstream_models_distinct() {
+        let events = vec![
+            json!({
+                "type": "message_start",
+                "message": {
+                    "model": "gpt-5.4",
+                    "usage": {
+                        "input_tokens": 10
+                    }
+                }
+            }),
+            json!({
+                "type": "message_delta",
+                "usage": {
+                    "output_tokens": 2
+                }
+            }),
+        ];
+        let usage = TokenUsage::from_claude_stream_events(&events).unwrap();
+
+        assert_eq!(
+            effective_claude_stream_model(&events, &usage, "claude-sonnet-4-6"),
+            "gpt-5.4"
+        );
     }
 }

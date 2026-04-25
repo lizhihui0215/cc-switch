@@ -803,6 +803,7 @@
     "presets": {
       "ucloud": "Compshare",
       "shengsuanyun": "Shengsuanyun",
+      "token4ai": "token4AI",
       "openrouter": "OpenRouter",
       "deepseek": "DeepSeek",
       "together": "Together AI"
@@ -868,12 +869,15 @@
     "fetchingModels": "取得中...",
     "fetchModelsSuccess": "{{count}}件のモデルを取得",
     "fetchModelsFailed": "モデル一覧の取得に失敗しました",
-    "fetchModelsEmpty": "モデルが見つかりません",
+    "fetchModelsEmpty": "モデル一覧は空です。モデル名を手動入力して続行できます。",
     "fetchModelsNeedApiKey": "先に API Key を入力してください",
     "fetchModelsNeedEndpoint": "先に API エンドポイントを入力してください",
     "fetchModelsNeedConfig": "先に API エンドポイントと API Key を入力してください",
     "fetchModelsAuthFailed": "API Key が無効か、権限がありません",
     "fetchModelsNotSupported": "このプロバイダーはモデル一覧の取得に対応していません",
+    "fetchModelsBaseUrlInvalid": "モデル取得エンドポイントが見つかりません。Base URL を確認してください。すでに /v1 を含む場合は /v1 を重複させないでください。",
+    "fetchModelsConnectionFailed": "プロバイダーのエンドポイントに接続できません。ネットワーク、DNS、TLS、プロキシ設定を確認してください。",
+    "fetchModelsParseFailed": "標準的な OpenAI-compatible /models レスポンスではありません",
     "fetchModelsTimeout": "リクエストがタイムアウトしました。ネットワーク接続を確認してください"
   },
   "copilot": {

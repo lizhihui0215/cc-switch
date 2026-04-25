@@ -290,6 +290,7 @@ pub struct ProviderMeta {
     pub live_config_managed: Option<bool>,
     /// 供应商类型标识（用于特殊供应商检测）
     /// - "github_copilot": GitHub Copilot 供应商
+    /// - "openai_compatible": OpenAI-compatible API Key 供应商
     #[serde(rename = "providerType", skip_serializing_if = "Option::is_none")]
     pub provider_type: Option<String>,
     /// GitHub Copilot 关联账号 ID（仅 github_copilot 供应商使用）

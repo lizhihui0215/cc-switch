@@ -51,7 +51,14 @@ export function showFetchModelsError(
     return;
   }
   if (msg.includes("HTTP 404") || msg.includes("HTTP 405")) {
-    toast.error(t("providerForm.fetchModelsNotSupported"));
+    toast.error(t("providerForm.fetchModelsBaseUrlInvalid"));
+    return;
+  }
+  if (
+    msg.includes("Endpoint connection failed") ||
+    msg.includes("Request failed")
+  ) {
+    toast.error(t("providerForm.fetchModelsConnectionFailed"));
     return;
   }
   if (msg.includes("timeout") || msg.includes("timed out")) {
@@ -59,7 +66,7 @@ export function showFetchModelsError(
     return;
   }
   if (msg.includes("Failed to parse")) {
-    toast.error(t("providerForm.fetchModelsNotSupported"));
+    toast.error(t("providerForm.fetchModelsParseFailed"));
     return;
   }
 

@@ -59,7 +59,8 @@ export interface ProviderPreset {
   // 供应商类型标识（用于特殊供应商检测）
   // - "github_copilot": GitHub Copilot 供应商（需要 OAuth 认证）
   // - "codex_oauth": OpenAI Codex via ChatGPT Plus/Pro 反代（需要 OAuth 认证）
-  providerType?: "github_copilot" | "codex_oauth";
+  // - "openai_compatible": OpenAI-compatible API Key 供应商
+  providerType?: "github_copilot" | "codex_oauth" | "openai_compatible";
 
   // 是否需要 OAuth 认证（而非 API Key）
   requiresOAuth?: boolean;
@@ -84,6 +85,27 @@ export const providerPresets: ProviderPreset[] = [
     },
     icon: "anthropic",
     iconColor: "#D4915D",
+  },
+  {
+    name: "token4AI",
+    nameKey: "providerForm.presets.token4ai",
+    websiteUrl: "https://token4ai.cloud",
+    settingsConfig: {
+      env: {
+        ANTHROPIC_BASE_URL: "https://api.token4ai.cloud/v1",
+        ANTHROPIC_AUTH_TOKEN: "",
+        ANTHROPIC_MODEL: "",
+        ANTHROPIC_DEFAULT_HAIKU_MODEL: "",
+        ANTHROPIC_DEFAULT_SONNET_MODEL: "",
+        ANTHROPIC_DEFAULT_OPUS_MODEL: "",
+      },
+    },
+    category: "aggregator",
+    isPartner: true,
+    apiFormat: "openai_responses",
+    providerType: "openai_compatible",
+    endpointCandidates: ["https://api.token4ai.cloud/v1"],
+    icon: "token4ai",
   },
   {
     name: "Shengsuanyun",

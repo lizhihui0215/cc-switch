@@ -1846,6 +1846,20 @@ mod tests {
     }
 
     #[test]
+    fn test_resolve_claude_stream_url_for_token4ai_responses() {
+        let url = StreamCheckService::resolve_claude_stream_url(
+            "https://api.token4ai.cloud/v1",
+            AuthStrategy::Bearer,
+            "openai_responses",
+            false,
+            "token4ai-model",
+        );
+
+        assert_eq!(url, "https://api.token4ai.cloud/v1/responses");
+        assert!(!url.contains("/v1/v1/"));
+    }
+
+    #[test]
     fn test_resolve_claude_stream_url_for_anthropic() {
         let url = StreamCheckService::resolve_claude_stream_url(
             "https://api.anthropic.com",

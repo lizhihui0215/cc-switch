@@ -4,6 +4,7 @@
 //! 主要面向第三方聚合站（硅基流动、OpenRouter 等）。
 
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::time::Duration;
 
 /// 获取到的模型信息
@@ -12,18 +13,6 @@ use std::time::Duration;
 pub struct FetchedModel {
     pub id: String,
     pub owned_by: Option<String>,
-}
-
-/// OpenAI 兼容的 /v1/models 响应格式
-#[derive(Debug, Deserialize)]
-struct ModelsResponse {
-    data: Option<Vec<ModelEntry>>,
-}
-
-#[derive(Debug, Deserialize)]
-struct ModelEntry {
-    id: String,
-    owned_by: Option<String>,
 }
 
 const FETCH_TIMEOUT_SECS: u64 = 15;
@@ -49,30 +38,121 @@ pub async fn fetch_models(
         .timeout(Duration::from_secs(FETCH_TIMEOUT_SECS))
         .send()
         .await
-        .map_err(|e| format!("Request failed: {e}"))?;
+        .map_err(map_request_error)?;
 
     let status = response.status();
     if !status.is_success() {
         let body = response.text().await.unwrap_or_default();
-        return Err(format!("HTTP {status}: {body}"));
+        return Err(format_http_error(status.as_u16(), &body));
     }
 
-    let resp: ModelsResponse = response
-        .json()
+    let body = response
+        .text()
         .await
-        .map_err(|e| format!("Failed to parse response: {e}"))?;
+        .map_err(|e| format!("Failed to read response body: {e}"))?;
+    let value: Value = serde_json::from_str(&body)
+        .map_err(|e| format!("Failed to parse response: response is not valid JSON ({e})"))?;
 
-    let mut models: Vec<FetchedModel> = resp
-        .data
-        .unwrap_or_default()
-        .into_iter()
-        .map(|m| FetchedModel {
-            id: m.id,
-            owned_by: m.owned_by,
-        })
-        .collect();
+    let mut models = parse_models_response(value)?;
 
     models.sort_by(|a, b| a.id.cmp(&b.id));
+    models.dedup_by(|a, b| a.id == b.id);
+    Ok(models)
+}
+
+fn map_request_error(err: reqwest::Error) -> String {
+    if err.is_timeout() {
+        return "Request timeout: provider endpoint did not respond".to_string();
+    }
+    if err.is_connect() {
+        return format!("Endpoint connection failed: {err}");
+    }
+    format!("Request failed: {err}")
+}
+
+fn format_http_error(status: u16, body: &str) -> String {
+    match status {
+        401 | 403 => format!("HTTP {status}: API Key is invalid or lacks permission"),
+        404 => format!(
+            "HTTP 404: Base URL may be incorrect; ensure the models endpoint is not duplicated as /v1/v1/models"
+        ),
+        _ => {
+            let body = truncate_body(body, 300);
+            if body.is_empty() {
+                format!("HTTP {status}")
+            } else {
+                format!("HTTP {status}: {body}")
+            }
+        }
+    }
+}
+
+fn truncate_body(body: &str, max_len: usize) -> String {
+    if body.len() <= max_len {
+        return body.to_string();
+    }
+    let mut end = max_len;
+    while end > 0 && !body.is_char_boundary(end) {
+        end -= 1;
+    }
+    format!("{}...", &body[..end])
+}
+
+fn parse_models_response(value: Value) -> Result<Vec<FetchedModel>, String> {
+    let entries = value
+        .get("data")
+        .and_then(Value::as_array)
+        .or_else(|| value.get("models").and_then(Value::as_array))
+        .or_else(|| value.as_array())
+        .ok_or_else(|| {
+            "Failed to parse response: not a standard OpenAI-compatible /models response"
+                .to_string()
+        })?;
+
+    let mut models = Vec::new();
+
+    for entry in entries {
+        if let Some(id) = entry.as_str().map(str::trim).filter(|id| !id.is_empty()) {
+            models.push(FetchedModel {
+                id: id.to_string(),
+                owned_by: None,
+            });
+            continue;
+        }
+
+        let Some(obj) = entry.as_object() else {
+            continue;
+        };
+
+        let id = obj
+            .get("id")
+            .or_else(|| obj.get("name"))
+            .and_then(Value::as_str)
+            .map(str::trim)
+            .filter(|id| !id.is_empty());
+
+        let Some(id) = id else {
+            continue;
+        };
+
+        let owned_by = obj
+            .get("owned_by")
+            .or_else(|| obj.get("ownedBy"))
+            .and_then(Value::as_str)
+            .map(ToString::to_string);
+
+        models.push(FetchedModel {
+            id: id.to_string(),
+            owned_by,
+        });
+    }
+
+    if !entries.is_empty() && models.is_empty() {
+        return Err(
+            "Failed to parse response: model entries do not contain id or name".to_string(),
+        );
+    }
+
     Ok(models)
 }
 
@@ -138,6 +218,14 @@ mod tests {
     }
 
     #[test]
+    fn test_build_models_url_token4ai_with_v1() {
+        assert_eq!(
+            build_models_url("https://api.token4ai.cloud/v1", false).unwrap(),
+            "https://api.token4ai.cloud/v1/models"
+        );
+    }
+
+    #[test]
     fn test_build_models_url_full_url() {
         assert_eq!(
             build_models_url("https://proxy.example.com/v1/chat/completions", true).unwrap(),
@@ -153,8 +241,7 @@ mod tests {
     #[test]
     fn test_parse_response() {
         let json = r#"{"object":"list","data":[{"id":"gpt-4","object":"model","owned_by":"openai"},{"id":"claude-3-sonnet","object":"model","owned_by":"anthropic"}]}"#;
-        let resp: ModelsResponse = serde_json::from_str(json).unwrap();
-        let data = resp.data.unwrap();
+        let data = parse_models_response(serde_json::from_str(json).unwrap()).unwrap();
         assert_eq!(data.len(), 2);
         assert_eq!(data[0].id, "gpt-4");
         assert_eq!(data[0].owned_by.as_deref(), Some("openai"));
@@ -164,8 +251,7 @@ mod tests {
     #[test]
     fn test_parse_response_no_owned_by() {
         let json = r#"{"object":"list","data":[{"id":"my-model","object":"model"}]}"#;
-        let resp: ModelsResponse = serde_json::from_str(json).unwrap();
-        let data = resp.data.unwrap();
+        let data = parse_models_response(serde_json::from_str(json).unwrap()).unwrap();
         assert_eq!(data[0].id, "my-model");
         assert!(data[0].owned_by.is_none());
     }
@@ -173,7 +259,47 @@ mod tests {
     #[test]
     fn test_parse_response_empty_data() {
         let json = r#"{"object":"list","data":[]}"#;
-        let resp: ModelsResponse = serde_json::from_str(json).unwrap();
-        assert!(resp.data.unwrap().is_empty());
+        let data = parse_models_response(serde_json::from_str(json).unwrap()).unwrap();
+        assert!(data.is_empty());
+    }
+
+    #[test]
+    fn test_parse_response_data_name_fallback() {
+        let json = r#"{"data":[{"name":"provider-model"}]}"#;
+        let data = parse_models_response(serde_json::from_str(json).unwrap()).unwrap();
+        assert_eq!(data[0].id, "provider-model");
+    }
+
+    #[test]
+    fn test_parse_response_models_array() {
+        let json = r#"{"models":[{"id":"model-a"},{"name":"model-b"}]}"#;
+        let data = parse_models_response(serde_json::from_str(json).unwrap()).unwrap();
+        assert_eq!(
+            data.iter().map(|m| m.id.as_str()).collect::<Vec<_>>(),
+            vec!["model-a", "model-b"]
+        );
+    }
+
+    #[test]
+    fn test_parse_response_string_array() {
+        let json = r#"["model-a","model-b"]"#;
+        let data = parse_models_response(serde_json::from_str(json).unwrap()).unwrap();
+        assert_eq!(
+            data.iter().map(|m| m.id.as_str()).collect::<Vec<_>>(),
+            vec!["model-a", "model-b"]
+        );
+    }
+
+    #[test]
+    fn test_parse_response_rejects_invalid_shape() {
+        let json = r#"{"items":[{"value":"not-a-model"}]}"#;
+        let err = parse_models_response(serde_json::from_str(json).unwrap()).unwrap_err();
+        assert!(err.contains("not a standard OpenAI-compatible"));
+    }
+
+    #[test]
+    fn test_parse_response_rejects_invalid_json() {
+        let err = serde_json::from_str::<Value>("{not-json").unwrap_err();
+        assert!(err.is_syntax());
     }
 }

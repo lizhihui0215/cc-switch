@@ -61,6 +61,8 @@ pub enum ProviderType {
     GeminiCli,
     /// OpenRouter（已支持 Claude Code 兼容接口，默认透传；保留旧转换逻辑备用）
     OpenRouter,
+    /// OpenAI-compatible API Key 供应商
+    OpenAICompatible,
     /// GitHub Copilot (OAuth + Copilot Token，需要 Anthropic ↔ OpenAI 转换)
     GitHubCopilot,
     /// OpenAI Codex (ChatGPT Plus/Pro OAuth，需要 Anthropic ↔ Responses API 转换)
@@ -78,6 +80,7 @@ impl ProviderType {
         match self {
             ProviderType::GitHubCopilot => true,
             ProviderType::CodexOAuth => true,
+            ProviderType::OpenAICompatible => true,
             ProviderType::OpenRouter => false,
             _ => false,
         }
@@ -89,6 +92,7 @@ impl ProviderType {
         match self {
             ProviderType::Claude | ProviderType::ClaudeAuth => "https://api.anthropic.com",
             ProviderType::Codex => "https://api.openai.com",
+            ProviderType::OpenAICompatible => "https://api.openai.com",
             ProviderType::Gemini | ProviderType::GeminiCli => {
                 "https://generativelanguage.googleapis.com"
             }
@@ -120,6 +124,9 @@ impl ProviderType {
                     }
                     if meta.provider_type.as_deref() == Some("codex_oauth") {
                         return ProviderType::CodexOAuth;
+                    }
+                    if meta.provider_type.as_deref() == Some("openai_compatible") {
+                        return ProviderType::OpenAICompatible;
                     }
                 }
 
@@ -190,6 +197,7 @@ impl ProviderType {
             ProviderType::Gemini => "gemini",
             ProviderType::GeminiCli => "gemini_cli",
             ProviderType::OpenRouter => "openrouter",
+            ProviderType::OpenAICompatible => "openai_compatible",
             ProviderType::GitHubCopilot => "github_copilot",
             ProviderType::CodexOAuth => "codex_oauth",
         }
@@ -213,6 +221,9 @@ impl std::str::FromStr for ProviderType {
             "gemini" => Ok(ProviderType::Gemini),
             "gemini_cli" | "gemini-cli" => Ok(ProviderType::GeminiCli),
             "openrouter" => Ok(ProviderType::OpenRouter),
+            "openai_compatible" | "openai-compatible" | "openaicompatible" => {
+                Ok(ProviderType::OpenAICompatible)
+            }
             "github_copilot" | "github-copilot" | "githubcopilot" => {
                 Ok(ProviderType::GitHubCopilot)
             }
@@ -241,6 +252,7 @@ pub fn get_adapter_for_provider_type(provider_type: &ProviderType) -> Box<dyn Pr
     match provider_type {
         ProviderType::Claude
         | ProviderType::ClaudeAuth
+        | ProviderType::OpenAICompatible
         | ProviderType::OpenRouter
         | ProviderType::GitHubCopilot
         | ProviderType::CodexOAuth => Box::new(ClaudeAdapter::new()),
@@ -279,6 +291,7 @@ mod tests {
         assert!(!ProviderType::Gemini.needs_transform());
         assert!(!ProviderType::GeminiCli.needs_transform());
         assert!(!ProviderType::OpenRouter.needs_transform());
+        assert!(ProviderType::OpenAICompatible.needs_transform());
         assert!(ProviderType::GitHubCopilot.needs_transform());
     }
 
@@ -307,6 +320,10 @@ mod tests {
         assert_eq!(
             ProviderType::OpenRouter.default_endpoint(),
             "https://openrouter.ai/api"
+        );
+        assert_eq!(
+            ProviderType::OpenAICompatible.default_endpoint(),
+            "https://api.openai.com"
         );
         assert_eq!(
             ProviderType::GitHubCopilot.default_endpoint(),
@@ -349,6 +366,14 @@ mod tests {
             ProviderType::OpenRouter
         );
         assert_eq!(
+            "openai_compatible".parse::<ProviderType>().unwrap(),
+            ProviderType::OpenAICompatible
+        );
+        assert_eq!(
+            "openai-compatible".parse::<ProviderType>().unwrap(),
+            ProviderType::OpenAICompatible
+        );
+        assert_eq!(
             "github_copilot".parse::<ProviderType>().unwrap(),
             ProviderType::GitHubCopilot
         );
@@ -371,6 +396,7 @@ mod tests {
         assert_eq!(ProviderType::Gemini.as_str(), "gemini");
         assert_eq!(ProviderType::GeminiCli.as_str(), "gemini_cli");
         assert_eq!(ProviderType::OpenRouter.as_str(), "openrouter");
+        assert_eq!(ProviderType::OpenAICompatible.as_str(), "openai_compatible");
         assert_eq!(ProviderType::GitHubCopilot.as_str(), "github_copilot");
     }
 
@@ -417,6 +443,24 @@ mod tests {
 
         let provider_type = ProviderType::from_app_type_and_config(&AppType::Claude, &provider);
         assert_eq!(provider_type, ProviderType::OpenRouter);
+    }
+
+    #[test]
+    fn test_from_app_type_claude_openai_compatible() {
+        let mut provider = create_provider(json!({
+            "env": {
+                "ANTHROPIC_BASE_URL": "https://api.token4ai.cloud/v1",
+                "ANTHROPIC_AUTH_TOKEN": "token4ai-test-key"
+            }
+        }));
+        provider.meta = Some(crate::provider::ProviderMeta {
+            provider_type: Some("openai_compatible".to_string()),
+            api_format: Some("openai_responses".to_string()),
+            ..Default::default()
+        });
+
+        let provider_type = ProviderType::from_app_type_and_config(&AppType::Claude, &provider);
+        assert_eq!(provider_type, ProviderType::OpenAICompatible);
     }
 
     #[test]

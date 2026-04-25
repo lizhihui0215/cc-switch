@@ -148,6 +148,13 @@ pub static DEFAULT_PROVIDER_ICONS: Lazy<HashMap<&'static str, ProviderIcon>> = L
             color: "#FFD21E",
         },
     );
+    m.insert(
+        "token4ai",
+        ProviderIcon {
+            name: "token4ai",
+            color: "#FFFFFF",
+        },
+    );
 
     // 云平台
     m.insert(
@@ -228,6 +235,13 @@ mod tests {
         let icon = infer_provider_icon("ANTHROPIC");
         assert!(icon.is_some());
         assert_eq!(icon.unwrap().name, "anthropic");
+    }
+
+    #[test]
+    fn test_token4ai_match() {
+        let icon = infer_provider_icon("token4AI");
+        assert!(icon.is_some());
+        assert_eq!(icon.unwrap().name, "token4ai");
     }
 
     #[test]

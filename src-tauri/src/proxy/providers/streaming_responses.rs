@@ -821,6 +821,33 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn test_token4ai_streaming_smoke_text_delta() {
+        let input = concat!(
+            "event: response.created\n",
+            "data: {\"type\":\"response.created\",\"response\":{\"id\":\"resp_token4ai\",\"model\":\"token4ai-model\",\"usage\":{\"input_tokens\":3,\"output_tokens\":0}}}\n\n",
+            "event: response.output_text.delta\n",
+            "data: {\"type\":\"response.output_text.delta\",\"delta\":\"ok\"}\n\n",
+            "event: response.completed\n",
+            "data: {\"type\":\"response.completed\",\"response\":{\"status\":\"completed\",\"usage\":{\"input_tokens\":3,\"output_tokens\":1}}}\n\n"
+        );
+
+        let upstream = stream::iter(vec![Ok::<_, std::io::Error>(Bytes::from(
+            input.as_bytes().to_vec(),
+        ))]);
+        let converted = create_anthropic_sse_stream_from_responses(upstream);
+        let chunks: Vec<_> = converted.collect().await;
+        let merged = chunks
+            .into_iter()
+            .map(|c| String::from_utf8_lossy(c.unwrap().as_ref()).to_string())
+            .collect::<String>();
+
+        assert!(merged.contains("\"type\":\"message_start\""));
+        assert!(merged.contains("\"type\":\"text_delta\""));
+        assert!(merged.contains("\"text\":\"ok\""));
+        assert!(merged.contains("\"type\":\"message_stop\""));
+    }
+
+    #[tokio::test]
     async fn test_streaming_conversion_interleaved_tool_deltas_by_item_id() {
         let input = concat!(
             "event: response.created\n",

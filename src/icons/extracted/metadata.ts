@@ -394,6 +394,13 @@ export const iconMetadata: Record<string, IconMetadata> = {
     keywords: ["shengsuanyun", "shengsuanyun"],
     defaultColor: "currentColor",
   },
+  token4ai: {
+    name: "token4ai",
+    displayName: "token4AI",
+    category: "ai-provider",
+    keywords: ["token4ai", "openai-compatible", "responses", "relay"],
+    defaultColor: "currentColor",
+  },
   lioncc: {
     name: "lioncc",
     displayName: "LionCC",

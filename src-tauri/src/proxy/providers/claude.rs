@@ -191,6 +191,7 @@ impl ClaudeAdapter {
     /// - GitHubCopilot: meta.provider_type 为 github_copilot 或 base_url 包含 githubcopilot.com
     /// - CodexOAuth: meta.provider_type 为 codex_oauth
     /// - OpenRouter: base_url 包含 openrouter.ai
+    /// - OpenAICompatible: meta.provider_type 为 openai_compatible
     /// - ClaudeAuth: auth_mode 为 bearer_only
     /// - Claude: 默认 Anthropic 官方
     pub fn provider_type(&self, provider: &Provider) -> ProviderType {
@@ -217,6 +218,11 @@ impl ClaudeAdapter {
         // 检测 OpenRouter
         if self.is_openrouter(provider) {
             return ProviderType::OpenRouter;
+        }
+
+        // 检测 OpenAI-compatible API Key 供应商
+        if self.is_openai_compatible(provider) {
+            return ProviderType::OpenAICompatible;
         }
 
         // 检测 ClaudeAuth (仅 Bearer 认证)
@@ -262,6 +268,15 @@ impl ClaudeAdapter {
             return base_url.contains("openrouter.ai");
         }
         false
+    }
+
+    /// 检测是否为 OpenAI-compatible API Key 供应商
+    fn is_openai_compatible(&self, provider: &Provider) -> bool {
+        provider
+            .meta
+            .as_ref()
+            .and_then(|meta| meta.provider_type.as_deref())
+            == Some("openai_compatible")
     }
 
     /// 获取 API 格式
@@ -471,6 +486,7 @@ impl ProviderAdapter for ClaudeAdapter {
             }
             ProviderType::Gemini => Some(AuthInfo::new(key, AuthStrategy::Google)),
             ProviderType::OpenRouter => Some(AuthInfo::new(key, AuthStrategy::Bearer)),
+            ProviderType::OpenAICompatible => Some(AuthInfo::new(key, AuthStrategy::Bearer)),
             ProviderType::ClaudeAuth => Some(AuthInfo::new(key, AuthStrategy::ClaudeAuth)),
             _ => Some(AuthInfo::new(key, AuthStrategy::Anthropic)),
         }
@@ -1002,6 +1018,38 @@ mod tests {
         let adapter = ClaudeAdapter::new();
         let url = adapter.build_url("https://integrate.api.nvidia.com", "/v1/chat/completions");
         assert_eq!(url, "https://integrate.api.nvidia.com/v1/chat/completions");
+    }
+
+    #[test]
+    fn test_token4ai_openai_compatible_provider_uses_responses_and_bearer() {
+        let adapter = ClaudeAdapter::new();
+        let provider = create_provider_with_meta(
+            json!({
+                "env": {
+                    "ANTHROPIC_BASE_URL": "https://api.token4ai.cloud/v1",
+                    "ANTHROPIC_AUTH_TOKEN": "token4ai-test-key"
+                }
+            }),
+            ProviderMeta {
+                provider_type: Some("openai_compatible".to_string()),
+                api_format: Some("openai_responses".to_string()),
+                ..Default::default()
+            },
+        );
+
+        assert_eq!(
+            adapter.provider_type(&provider),
+            ProviderType::OpenAICompatible
+        );
+        assert!(adapter.needs_transform(&provider));
+
+        let auth = adapter.extract_auth(&provider).unwrap();
+        assert_eq!(auth.strategy, AuthStrategy::Bearer);
+        assert_eq!(auth.api_key, "token4ai-test-key");
+
+        let url = adapter.build_url("https://api.token4ai.cloud/v1", "/v1/responses");
+        assert_eq!(url, "https://api.token4ai.cloud/v1/responses");
+        assert!(!url.contains("/v1/v1/"));
     }
 
     #[test]

@@ -803,6 +803,7 @@
     "presets": {
       "ucloud": "Compshare",
       "shengsuanyun": "Shengsuanyun",
+      "token4ai": "token4AI",
       "openrouter": "OpenRouter",
       "deepseek": "DeepSeek",
       "together": "Together AI"
@@ -868,12 +869,15 @@
     "fetchingModels": "Fetching...",
     "fetchModelsSuccess": "Found {{count}} models",
     "fetchModelsFailed": "Failed to fetch models",
-    "fetchModelsEmpty": "No models found",
+    "fetchModelsEmpty": "Model list is empty. You can still enter a model name manually.",
     "fetchModelsNeedApiKey": "Please fill in API Key first",
     "fetchModelsNeedEndpoint": "Please fill in API endpoint first",
     "fetchModelsNeedConfig": "Please fill in API endpoint and API Key first",
     "fetchModelsAuthFailed": "API Key is invalid or lacks permission",
     "fetchModelsNotSupported": "This provider does not support fetching model list",
+    "fetchModelsBaseUrlInvalid": "Model discovery endpoint was not found. Check the Base URL; if it already includes /v1, do not append another /v1.",
+    "fetchModelsConnectionFailed": "Cannot connect to the provider endpoint. Check network, DNS, TLS, or proxy settings.",
+    "fetchModelsParseFailed": "Response is not a standard OpenAI-compatible /models payload",
     "fetchModelsTimeout": "Request timed out, please check network connection"
   },
   "copilot": {

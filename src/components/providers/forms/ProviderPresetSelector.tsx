@@ -78,7 +78,12 @@ export function ProviderPresetSelector({
     preset: ProviderPreset | CodexProviderPreset | GeminiProviderPreset,
   ) => {
     const iconType = preset.theme?.icon;
-    if (!iconType) return null;
+    if (!iconType) {
+      if (preset.icon === "token4ai") {
+        return <ProviderIcon icon={preset.icon} name={preset.name} size={14} />;
+      }
+      return null;
+    }
 
     switch (iconType) {
       case "claude":
