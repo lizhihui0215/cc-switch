@@ -43,4 +43,14 @@ describe("Token4AI validation", () => {
       "invalid_base_url",
     );
   });
+
+  it("does not validate skipped products without API keys", () => {
+    const state = createDefaultToken4AIUnifiedState();
+    state.openai.apiKey = "token4ai-openai-test-key";
+    state.gemini.baseUrl = "not a url";
+
+    expect(validateToken4AIForm(state).map((issue) => issue.code)).not.toContain(
+      "invalid_base_url",
+    );
+  });
 });

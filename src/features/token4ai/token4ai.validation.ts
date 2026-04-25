@@ -49,6 +49,10 @@ export function validateToken4AIForm(
       continue;
     }
 
+    if (!shouldCreateToken4AIProduct(product)) {
+      continue;
+    }
+
     const baseUrl = normalizeToken4AIBaseUrl(productId, product.baseUrl);
     if (!isValidToken4AIUrl(baseUrl)) {
       issues.push({
