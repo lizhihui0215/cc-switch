@@ -2355,7 +2355,9 @@
     "productApiFormat": "API Format: {{apiFormat}}",
     "modelHint": "Model is optional; if model discovery fails, enter a model name manually.",
     "validation": {
-      "requireOneApiKey": "Please enter at least one Token4AI API key"
+      "requireOneApiKey": "Please enter at least one Token4AI API key",
+      "invalid_base_url": "Token4AI Base URL is invalid. Use an address starting with http:// or https://.",
+      "unsupported_claude_compat": "This Token4AI product does not support Claude Code compatibility mode yet."
     },
     "toast": {
       "created": "Created {{count}} Token4AI providers: {{providers}}",

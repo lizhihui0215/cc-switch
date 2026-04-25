@@ -2355,7 +2355,9 @@
     "productApiFormat": "API Format: {{apiFormat}}",
     "modelHint": "模型可留空；模型发现失败时可手动输入。",
     "validation": {
-      "requireOneApiKey": "请至少填写一个 Token4AI 产品的 API Key"
+      "requireOneApiKey": "请至少填写一个 Token4AI 产品的 API Key",
+      "invalid_base_url": "Token4AI Base URL 不合法，请输入 http:// 或 https:// 开头的地址",
+      "unsupported_claude_compat": "该 Token4AI 产品暂不支持 Claude Code 兼容模式"
     },
     "toast": {
       "created": "已创建 {{count}} 个 Token4AI 供应商：{{providers}}",

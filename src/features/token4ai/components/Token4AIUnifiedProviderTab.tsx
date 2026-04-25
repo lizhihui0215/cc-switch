@@ -88,6 +88,16 @@ export function Token4AIUnifiedProviderTab({
         return;
       }
 
+      const validationIssue = validationIssues[0];
+      if (validationIssue) {
+        toast.error(
+          t(`token4aiUnified.validation.${validationIssue.code}`, {
+            defaultValue: validationIssue.message,
+          }),
+        );
+        return;
+      }
+
       setIsSubmitting(true);
       onSubmittingChange?.(true);
 

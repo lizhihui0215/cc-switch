@@ -2355,7 +2355,9 @@
     "productApiFormat": "API Format: {{apiFormat}}",
     "modelHint": "モデルは任意です。モデル取得に失敗した場合は手動入力できます。",
     "validation": {
-      "requireOneApiKey": "少なくとも 1 つの Token4AI API Key を入力してください"
+      "requireOneApiKey": "少なくとも 1 つの Token4AI API Key を入力してください",
+      "invalid_base_url": "Token4AI Base URL が無効です。http:// または https:// で始まる URL を入力してください。",
+      "unsupported_claude_compat": "この Token4AI 製品はまだ Claude Code 互換モードに対応していません。"
     },
     "toast": {
       "created": "{{count}} 件の Token4AI プロバイダーを作成しました：{{providers}}",
